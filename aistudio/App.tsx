@@ -9,6 +9,7 @@
 import React, { useState } from "react";
 
 const BACKEND_URL = "https://agent-shield-REPLACE-ME.a.run.app";
+const GITHUB_URL = "https://github.com/flyworker/agent-shield";
 
 type ScanResponse = {
   forcefield: {
@@ -137,8 +138,11 @@ export default function App() {
         <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 3, marginTop: 2 }}>
           MULTI-AGENT PROMPT-INJECTION FIREWALL · ANG™
         </div>
-        <div style={{ fontSize: 11, color: "#6fa4c7", marginTop: 8 }}>
-          Backend: <code>{BACKEND_URL}</code>
+        <div style={{ fontSize: 11, color: "#6fa4c7", marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap" }}>
+          <span>Backend: <code>{BACKEND_URL}</code></span>
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer" style={{ color: "#00eeff", textDecoration: "none", borderBottom: "1px dashed #00eeff" }}>
+            ▶ SOURCE ON GITHUB
+          </a>
         </div>
 
         <div style={{ marginTop: 18 }}>
