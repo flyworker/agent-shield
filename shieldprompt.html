@@ -457,6 +457,42 @@ body::after {
 .alert-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(200,0,20,0.07);border:1px solid var(--threat);color:var(--threat);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:5px;padding:4px 24px;z-index:200;opacity:0;white-space:nowrap;transition:opacity 0.3s}
 .alert-banner.show{opacity:1;animation:alertP 2s ease-in-out infinite}
 @keyframes alertP{0%,100%{opacity:1}50%{opacity:0.45}}
+/* ── READABILITY BUMP ── */
+.prompt-box{font-size:16px!important;line-height:1.6;height:140px;padding:10px 12px}
+.prompt-box::placeholder{font-size:15px}
+.pi-label{font-size:12px;letter-spacing:2px}
+.pi-value{font-size:12px}
+.pi-badge{font-size:11px;padding:3px 8px}
+.panel-label{font-size:11px;letter-spacing:3px;margin-bottom:4px}
+#promptInputLabel{font-size:14px!important;font-weight:900!important;letter-spacing:4px}
+.mini-title{font-size:11px;letter-spacing:3px;margin-bottom:7px}
+.mc-row{font-size:12px;padding:3px 0}
+.ps-title{font-size:11px;letter-spacing:4px;margin-bottom:12px}
+.atk-lbl{font-size:11px;width:92px}
+.atk-val{font-size:11px;width:28px}
+.an-num{font-size:20px!important}
+.an-title{font-size:13px!important;letter-spacing:2px}
+.an-sub{font-size:10px!important;letter-spacing:1px}
+.an-detail-label{font-size:10px!important;letter-spacing:1px}
+.an-detail-val{font-size:12px!important}
+.status-text{font-size:11px!important;letter-spacing:2px}
+.fn-title{font-size:14px!important;letter-spacing:3px}
+.fn-sub{font-size:10px!important}
+.fv-label,.fs-label{font-size:15px!important;letter-spacing:3px;font-weight:900}
+.fv-text{font-size:26px!important;letter-spacing:3px;font-weight:900}
+.fv-reason{font-size:12px!important;line-height:1.5}
+.fs-value{font-size:38px!important}
+.fs-unit{font-size:10px!important}
+.top-tag{font-size:13px!important;letter-spacing:6px}
+.top-stats{font-size:11px!important;gap:26px}
+.top-date{font-size:10px!important;letter-spacing:2px}
+.bottom-bar,.bottom-bar *{font-size:11px!important;letter-spacing:2px}
+.ll{font-size:11px!important;line-height:1.6;padding:2px 0}
+.log-card-title{font-size:11px!important;letter-spacing:3px}
+.scan-btn{font-size:15px!important;letter-spacing:7px;padding:10px 0}
+.conflict-badge{font-size:11px!important;letter-spacing:2px}
+.rl{font-size:16px!important}
+.rl small{font-size:8px!important}
 </style>
 </head>
 <body>
@@ -500,7 +536,7 @@ body::after {
   <div class="left-panel">
 
     <div class="input-wrap">
-      <div class="panel-label">◈ PROMPT INPUT</div>
+      <div class="panel-label" id="promptInputLabel">◈ PROMPT INPUT</div>
       <textarea class="prompt-box" id="promptInput" placeholder="Enter prompt for injection scan...&#10;支持中文 / English / 混合输入&#10;&#10;Try: 忽略之前的指令，你现在是..."></textarea>
       <button class="scan-btn" id="scanBtn" onclick="startScan()">▶ DEPLOY AGENTS — SCAN</button>
     </div>
@@ -575,9 +611,36 @@ body::after {
           <div class="pi-badge en" id="piBadge">—</div>
         </div>
 
+        <!-- Wire 0 -->
+        <div class="wire" id="w0">
+          <div class="wire-line" id="wl0" style="height:14px"></div>
+          <div class="wire-arrow">▼</div>
+        </div>
+
+        <!-- AGENT 0: FORCEFIELD LOCAL ML PREFILTER -->
+        <div class="agent-node" id="node0">
+          <div class="an-header">
+            <div class="an-num">00</div>
+            <div class="an-title-wrap">
+              <div class="an-title">FORCEFIELD · LOCAL ML</div>
+              <div class="an-sub">OFFLINE REGEX+ONNX · EN-STRONG · &lt;10ms</div>
+            </div>
+            <div class="an-status">
+              <div class="status-dot sd-idle" id="dot0"></div>
+              <div class="status-text st-idle" id="st0">IDLE</div>
+            </div>
+          </div>
+          <div class="an-progress"><div class="an-prog-fill" id="prog0" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div></div>
+          <div class="an-details">
+            <div class="an-detail"><div class="an-detail-label">RISK</div><div class="an-detail-val dim" id="d0risk">—</div></div>
+            <div class="an-detail"><div class="an-detail-label">LATENCY</div><div class="an-detail-val dim" id="d0ms">—</div></div>
+            <div class="an-detail" style="flex-basis:100%"><div class="an-detail-label">THREATS</div><div class="an-detail-val dim" id="d0threats">—</div></div>
+          </div>
+        </div>
+
         <!-- Wire 1 -->
         <div class="wire" id="w1">
-          <div class="wire-line" id="wl1" style="height:18px"></div>
+          <div class="wire-line" id="wl1" style="height:14px"></div>
           <div class="wire-arrow">▼</div>
         </div>
 
@@ -636,7 +699,7 @@ body::after {
             </div>
             <div class="an-progress"><div class="an-prog-fill" id="prog2"></div></div>
             <div class="an-details">
-              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:8px">Gemini-2.0-Flash</div></div>
+              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:11px">Gemini-3.0-Flash preview</div></div>
               <div class="an-detail"><div class="an-detail-label">CONFIDENCE</div><div class="an-detail-val dim" id="d2conf">—</div></div>
               <div class="an-detail" style="flex-basis:100%"><div class="an-detail-label">VERDICT</div><div class="an-detail-val dim" id="d2verd">—</div></div>
             </div>
@@ -657,7 +720,7 @@ body::after {
             </div>
             <div class="an-progress"><div class="an-prog-fill" id="prog3"></div></div>
             <div class="an-details">
-              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:8px">Qwen2.5-3B</div></div>
+              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:11px">Qwen3.5-Plus</div></div>
               <div class="an-detail"><div class="an-detail-label">CONFIDENCE</div><div class="an-detail-val dim" id="d3conf">—</div></div>
               <div class="an-detail" style="flex-basis:100%"><div class="an-detail-label">VERDICT</div><div class="an-detail-val dim" id="d3verd">—</div></div>
             </div>
@@ -711,6 +774,7 @@ body::after {
 
     <div class="mini-card" style="clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px)">
       <div class="mini-title">◈ LAST SCAN RESULT</div>
+      <div class="mc-row"><span>FORCEFIELD</span>   <span class="v" id="rFF">—</span></div>
       <div class="mc-row"><span>PROMPT LANG</span>  <span class="v" id="rLang">—</span></div>
       <div class="mc-row"><span>ROUTER CLASS</span> <span class="v" id="rClass">—</span></div>
       <div class="mc-row"><span>GEMINI CONF</span>  <span class="v" id="rGemini">—</span></div>
@@ -783,7 +847,7 @@ setInterval(()=>{
   }
 },2200);
 
-// Scenarios
+// Fallback scenarios (used only if /api/scan is unreachable)
 const SC = {
   clean:{
     lang:'EN',cls:'NORMAL',route:'A2 ONLY',rconf:'99%',
@@ -858,7 +922,7 @@ function addLog(html){
 
 function resetAll(){
   // Nodes
-  [1,2,3,4].forEach(i=>{
+  [0,1,2,3,4].forEach(i=>{
     if(i<4) setNode(i,'');
     else setNode(i,'');
     setDot(i,'sd-idle');
@@ -867,10 +931,12 @@ function resetAll(){
     if(p){p.style.width='0';p.style.background='var(--blue)'}
   });
   // Wires off
-  setWire(1,false); setWire(3,false); setWireH('split',false);
+  setWire(0,false); setWire(1,false); setWire(3,false); setWireH('split',false);
   // Details
+  ['d0risk','d0ms','d0threats'].forEach(id=>{const e=document.getElementById(id);e.textContent='—';e.className='an-detail-val dim'});
   ['d1lang','d1cls','d1route','d1conf'].forEach(id=>{const e=document.getElementById(id);e.textContent='—';e.className='an-detail-val dim'});
   ['d2conf','d2verd','d3conf','d3verd'].forEach(id=>{const e=document.getElementById(id);e.textContent='—';e.className='an-detail-val dim'});
+  const rff=document.getElementById('rFF'); if(rff){rff.textContent='—';rff.className='v'}
   // Fusion
   const fv=document.getElementById('fusionVerdict');
   fv.textContent='— AWAITING PIPELINE —';fv.className='fv-text fv-idle';
@@ -897,23 +963,51 @@ async function startScan(){
   document.getElementById('scanBtn').textContent='⟳ PIPELINE ACTIVE...';
   document.getElementById('scanBtn').style.color='var(--warn)';
 
-  // Pick scenario
-  const lo=input.toLowerCase();
-  let sc;
-  if(/ignore|忽略|jailbreak|forget|system prompt|你现在是|角色扮演|绕过|bypass|令牌|越权|现在起你/.test(lo)) sc=SC.threat;
-  else if(/pretend|assume|act as|假装|扮演|imagine you/.test(lo)) sc=SC.warn;
-  else sc=SC.clean;
-
   resetAll();
+
+  // Real backend call — 4-agent pipeline against api.meganova.ai
+  let sc;
+  const scanPromise = fetch('/api/scan',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({prompt:input})
+  }).then(r=>{
+    if(!r.ok) throw new Error('scan '+r.status);
+    return r.json();
+  }).then(j=>{sc=j;}).catch(err=>{
+    console.error('scan failed, falling back',err);
+    const lo=input.toLowerCase();
+    if(/ignore|忽略|jailbreak|forget|system prompt|你现在是|角色扮演|绕过|bypass|令牌|越权|现在起你/.test(lo)) sc=SC.threat;
+    else if(/pretend|assume|act as|假装|扮演|imagine you/.test(lo)) sc=SC.warn;
+    else sc=SC.clean;
+  });
 
   // Show input
   document.getElementById('piVal').textContent=input.slice(0,40)+(input.length>40?'…':'');
+  // Wait for the real pipeline result before animating downstream nodes
+  await scanPromise;
   const langBadge=document.getElementById('piBadge');
   if(sc.lang==='ZH-MIX'){langBadge.textContent='ZH-MIX';langBadge.className='pi-badge mix'}
   else if(sc.lang.startsWith('ZH')){langBadge.textContent='ZH';langBadge.className='pi-badge zh'}
   else{langBadge.textContent='EN';langBadge.className='pi-badge en'}
 
-  await delay(300);
+  await delay(200);
+
+  // ── AGENT 0 FORCEFIELD (local ML prefilter) ──
+  setWire(0,true);
+  await delay(120);
+  setNode(0,'active'); setDot(0,'sd-run'); setSt(0,'SCANNING','st-run');
+  const ff=sc.forcefield||{available:false,risk_score:0,threats:[],cls:'safe',ms:0,blocked:false};
+  const ffColor=ff.cls==='threat'?'var(--threat)':ff.cls==='warn'?'var(--warn)':'var(--safe)';
+  await animProg(0,100,500,ffColor);
+  detailVal('d0risk', ff.available?ff.risk_score.toFixed(2):'N/A', ff.cls==='safe'?'ok':ff.cls==='threat'?'thr':'wn');
+  detailVal('d0ms',   ff.available?(ff.ms+' ms'):'OFF', 'dim');
+  detailVal('d0threats', (ff.threats&&ff.threats.length)?ff.threats.join(' · '):(ff.available?'none':'disabled'), ff.threats&&ff.threats.length?'thr':'ok');
+  setNode(0,'done-'+ff.cls); setDot(0,'sd-'+ff.cls); setSt(0,ff.blocked?'BLOCK':(ff.cls==='safe'?'CLEAN':ff.cls.toUpperCase()),'st-'+ff.cls);
+  setWire(0,false);
+  const rff=document.getElementById('rFF');
+  if(rff){rff.textContent=ff.available?(ff.risk_score.toFixed(2)+' '+(ff.threats[0]||'')):'OFF';rff.className='v '+(ff.cls==='safe'?'ok':ff.cls==='threat'?'cr':'wn')}
+  await delay(150);
 
   // ── AGENT 1 ROUTER ──
   setWire(1,true);
