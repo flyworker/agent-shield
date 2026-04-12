@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldPrompt — ANG™ Pipeline</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+:root {
+  --blue:        #00c8ff;
+  --blue-b:      #00eeff;
+  --blue-dim:    #004d6e;
+  --cyan:        #00fff7;
+  --gold:        #c9a84c;
+  --gold-b:      #ffd700;
+  --threat:      #ff2233;
+  --threat-d:    #6b000c;
+  --safe:        #00ff88;
+  --warn:        #ffaa00;
+  --bg:          #00060f;
+  --panel:       rgba(0,180,255,0.04);
+  --border:      rgba(0,180,255,0.2);
+  --dim:         rgba(100,200,255,0.45);
+  --text:        rgba(180,235,255,0.9);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  overflow:hidden; height:100vh; width:100vw; cursor:crosshair;
+  background-image:
+    radial-gradient(ellipse at 25% 25%, rgba(0,80,180,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 75%, rgba(0,50,140,0.07) 0%, transparent 50%),
+    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);
+}
+body::after {
+  content:''; position:fixed; inset:0;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.85) 100%);
+  pointer-events:none; z-index:999;
+}
+
+/* ── GRID ── */
+.root {
+  width:100vw; height:100vh;
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 54px 1fr 46px;
+  padding:7px; gap:0;
+  position:relative; z-index:1;
+}
+
+/* Corners */
+.corner{position:fixed;width:46px;height:46px;z-index:100}
+.corner::before,.corner::after{content:'';position:absolute;background:var(--blue-b);box-shadow:0 0 10px var(--blue),0 0 20px rgba(0,200,255,0.2)}
+.corner.tl{top:7px;left:7px}    .corner.tl::before{top:0;left:0;width:100%;height:2px} .corner.tl::after{top:0;left:0;width:2px;height:100%}
+.corner.tr{top:7px;right:7px}   .corner.tr::before{top:0;right:0;width:100%;height:2px} .corner.tr::after{top:0;right:0;width:2px;height:100%}
+.corner.bl{bottom:7px;left:7px} .corner.bl::before{bottom:0;left:0;width:100%;height:2px}.corner.bl::after{bottom:0;left:0;width:2px;height:100%}
+.corner.br{bottom:7px;right:7px}.corner.br::before{bottom:0;right:0;width:100%;height:2px}.corner.br::after{bottom:0;right:0;width:2px;height:100%}
+
+/* ── TOP BAR ── */
+.top-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+  background:rgba(0,4,12,0.97);
+  position:relative; overflow:hidden;
+}
+.top-bar::after {
+  content:''; position:absolute; bottom:0; left:0; width:100%; height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue-b),var(--cyan),var(--blue-b),transparent);
+  animation:shimmer 5s linear infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+.logo-row{display:flex;align-items:center;gap:12px}
+.shield-hex {
+  width:34px; height:34px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  background:rgba(0,180,255,0.1);
+  border:1px solid var(--blue-b);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px;
+  box-shadow:0 0 14px var(--blue),0 0 28px rgba(0,200,255,0.15) inset;
+  animation:hexPulse 3s ease-in-out infinite;
+}
+@keyframes hexPulse{0%,100%{box-shadow:0 0 14px var(--blue),0 0 28px rgba(0,200,255,0.15) inset}50%{box-shadow:0 0 22px var(--blue-b),0 0 44px rgba(0,220,255,0.3) inset}}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:7px;color:var(--blue-b);text-shadow:0 0 18px var(--blue),0 0 36px rgba(0,200,255,0.3);animation:glitch 14s infinite}
+@keyframes glitch{0%,95%,100%{text-shadow:0 0 18px var(--blue);transform:none}96%{transform:translate(2px,0);text-shadow:-2px 0 var(--cyan),2px 0 var(--blue-b)}97%{transform:translate(-1px,0)}98%{transform:none}}
+.logo-sub{font-size:8px;letter-spacing:4px;color:var(--gold);text-shadow:0 0 6px var(--gold);margin-top:1px}
+
+.top-mid{display:flex;flex-direction:column;align-items:center;gap:3px}
+.top-tag{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:5px;color:var(--cyan);text-shadow:0 0 10px var(--cyan)}
+.top-stats{display:flex;gap:22px;font-size:9px;color:var(--dim)}
+.top-stats .on{color:var(--blue-b);animation:blink 1.4s infinite}
+.top-stats .thr{color:var(--threat);animation:blink 0.7s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
+
+.top-right{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.top-clock{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--blue-b);text-shadow:0 0 14px var(--blue);letter-spacing:3px}
+.top-date{font-size:8px;color:var(--dim);letter-spacing:2px}
+
+/* ── MAIN AREA ── */
+.main-area {
+  display:grid;
+  grid-template-columns: 300px 1fr 280px;
+  gap:8px;
+  padding:8px 0;
+  overflow:hidden;
+  min-height:0;
+}
+
+/* ── LEFT INPUT PANEL ── */
+.left-panel{display:flex;flex-direction:column;gap:7px;overflow:hidden}
+
+.panel-label{font-size:8px;letter-spacing:4px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;text-shadow:0 0 6px var(--gold);margin-bottom:2px}
+
+.input-wrap{
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:10px;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);
+}
+.prompt-box{
+  width:100%; height:90px;
+  background:rgba(0,180,255,0.03);
+  border:1px solid rgba(0,180,255,0.18);
+  color:var(--text); font-family:'Share Tech Mono',monospace; font-size:10px;
+  padding:7px 9px; resize:none; outline:none;
+  caret-color:var(--blue-b); transition:border-color 0.2s;
+  line-height:1.5;
+}
+.prompt-box:focus{border-color:var(--blue-b);box-shadow:0 0 14px rgba(0,180,255,0.1) inset}
+.prompt-box::placeholder{color:rgba(100,180,255,0.3)}
+
+.scan-btn{
+  width:100%; margin-top:7px;
+  background:rgba(0,180,255,0.07);
+  border:1px solid var(--blue-b);
+  color:var(--blue-b); font-family:'Bebas Neue',sans-serif;
+  font-size:13px; letter-spacing:6px; padding:8px 0;
+  cursor:pointer; transition:all 0.2s;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  position:relative; overflow:hidden;
+}
+.scan-btn:hover{background:rgba(0,200,255,0.14);box-shadow:0 0 20px rgba(0,180,255,0.18)}
+.scan-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,200,255,0.15),transparent);transition:left 0.4s}
+.scan-btn:hover::before{left:100%}
+
+/* Stats mini cards */
+.mini-card{background:var(--panel);border:1px solid var(--border);padding:8px 10px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.mini-title{font-size:7px;letter-spacing:3px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;margin-bottom:5px}
+.mc-row{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);padding:1px 0;border-bottom:1px solid rgba(0,150,220,0.1)}
+.mc-row:last-child{border-bottom:none}
+.mc-row .v{color:var(--text)}
+.mc-row .ok{color:var(--safe)}
+.mc-row .wn{color:var(--warn)}
+.mc-row .cr{color:var(--threat);animation:blink 0.7s infinite}
+
+/* Accuracy rings row */
+.rings-row{display:flex;gap:10px;justify-content:space-around;align-items:center;padding:4px 0}
+.mini-ring{position:relative;width:54px;height:54px}
+.mini-ring svg{width:100%;height:100%}
+.rl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;line-height:1}
+.rl small{font-size:6px;color:var(--dim);font-family:'Share Tech Mono',monospace}
+
+/* Attack dist */
+.atk-row{display:flex;align-items:center;gap:6px;margin-top:3px}
+.atk-lbl{font-size:8px;color:var(--dim);width:76px;flex-shrink:0}
+.atk-track{flex:1;height:3px;background:rgba(0,120,200,0.15);border:1px solid rgba(0,150,220,0.2);overflow:hidden}
+.atk-fill{height:100%}
+.atk-val{font-size:8px;color:var(--dim);width:22px;text-align:right;flex-shrink:0}
+
+/* ── CENTER: PIPELINE HERO ── */
+.center-panel{display:flex;flex-direction:column;gap:6px;overflow:hidden;min-height:0}
+
+.pipeline-stage{
+  flex:1;
+  background:rgba(0,180,255,0.025);
+  border:1px solid var(--border);
+  position:relative;
+  display:flex;flex-direction:column;
+  align-items:center; justify-content:flex-start;
+  padding:14px 16px 10px;
+  overflow:hidden;
+  min-height:0;
+}
+
+/* Subtle grid bg */
+.pipeline-stage::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,180,255,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,180,255,0.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+
+.ps-title{font-size:8px;letter-spacing:5px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;text-shadow:0 0 6px var(--gold);margin-bottom:10px;align-self:flex-start}
+
+/* ── PIPELINE NODES ── */
+.pipeline{width:100%;display:flex;flex-direction:column;align-items:center;gap:0;position:relative;z-index:1}
+
+/* INPUT node at top */
+.pipe-input{
+  width:80%;
+  background:rgba(0,180,255,0.06);
+  border:1px solid rgba(0,180,255,0.35);
+  padding:8px 14px;
+  display:flex; align-items:center; gap:10px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% 100%,calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+  transition:all 0.3s;
+}
+.pi-label{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;letter-spacing:3px;color:var(--dim);flex:1}
+.pi-value{font-size:9px;color:var(--blue-b);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pi-badge{font-size:8px;padding:2px 6px;border:1px solid;letter-spacing:2px;font-family:'Rajdhani',sans-serif;font-weight:700;flex-shrink:0}
+.pi-badge.zh{color:var(--gold);border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07)}
+.pi-badge.en{color:var(--cyan);border-color:rgba(0,255,247,0.3);background:rgba(0,255,247,0.05)}
+.pi-badge.mix{color:var(--warn);border-color:rgba(255,170,0,0.4);background:rgba(255,170,0,0.07)}
+
+/* Connector wire */
+.wire{
+  display:flex;flex-direction:column;align-items:center;
+  position:relative; width:100%;
+}
+.wire-line{
+  width:2px; background:linear-gradient(180deg,var(--blue-dim),var(--blue));
+  box-shadow:0 0 6px var(--blue);
+  position:relative; overflow:hidden;
+}
+.wire-line::after{
+  content:''; position:absolute; top:-100%; left:0; width:100%; height:100%;
+  background:linear-gradient(180deg,transparent,var(--blue-b),transparent);
+  animation:wireFlow 1.5s linear infinite;
+  opacity:0;
+}
+.wire-line.active::after{opacity:1}
+@keyframes wireFlow{0%{top:-100%}100%{top:100%}}
+
+.wire-arrow{
+  font-size:10px; color:var(--blue); margin:-1px 0;
+  text-shadow:0 0 6px var(--blue);
+}
+
+/* Split wires for parallel */
+.wire-split{
+  display:flex; width:100%; align-items:flex-start; position:relative;
+}
+.wire-split-left,.wire-split-right{
+  flex:1; display:flex; flex-direction:column; align-items:center;
+}
+.wire-h{
+  height:2px; background:linear-gradient(90deg,transparent,var(--blue));
+  box-shadow:0 0 4px var(--blue); position:relative; overflow:hidden;
+  width:50%;
+}
+.wire-h.right{background:linear-gradient(90deg,var(--blue),transparent)}
+.wire-h::after{
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg,transparent,var(--blue-b),transparent);
+  opacity:0;
+}
+.wire-h.active::after{opacity:1; animation:wireFlowH 1s linear infinite}
+@keyframes wireFlowH{0%{left:-100%}100%{left:100%}}
+
+/* AGENT NODE */
+.agent-node{
+  width:90%;
+  background:rgba(0,100,180,0.07);
+  border:1px solid var(--border);
+  padding:10px 14px;
+  position:relative;
+  transition:all 0.35s ease;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.agent-node.active{
+  background:rgba(0,180,255,0.1);
+  border-color:var(--blue-b);
+  box-shadow:0 0 20px rgba(0,180,255,0.15) inset, 0 0 30px rgba(0,180,255,0.08);
+}
+.agent-node.done-safe  {background:rgba(0,200,100,0.07);border-color:rgba(0,255,136,0.5);box-shadow:0 0 16px rgba(0,255,136,0.08) inset}
+.agent-node.done-threat{background:rgba(200,0,30,0.07);border-color:rgba(255,34,51,0.55);box-shadow:0 0 16px rgba(255,34,51,0.1) inset}
+.agent-node.done-warn  {background:rgba(180,120,0,0.07);border-color:rgba(255,170,0,0.5);box-shadow:0 0 16px rgba(255,170,0,0.08) inset}
+
+/* Animated scan line on active node */
+.agent-node.active::after{
+  content:''; position:absolute; top:0; left:0; width:100%; height:2px;
+  background:linear-gradient(90deg,transparent,var(--blue-b),transparent);
+  animation:nodeScan 1.2s linear infinite;
+}
+@keyframes nodeScan{0%{top:0}100%{top:100%}}
+
+.an-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.an-num{
+  font-family:'Bebas Neue',sans-serif;font-size:22px;
+  color:var(--blue-dim);
+  text-shadow:0 0 8px var(--blue-dim);
+  line-height:1; width:24px; flex-shrink:0;
+  transition:all 0.3s;
+}
+.agent-node.active .an-num{color:var(--blue-b);text-shadow:0 0 16px var(--blue-b)}
+.agent-node.done-safe   .an-num{color:var(--safe);text-shadow:0 0 12px var(--safe)}
+.agent-node.done-threat .an-num{color:var(--threat);text-shadow:0 0 14px var(--threat)}
+.agent-node.done-warn   .an-num{color:var(--warn);text-shadow:0 0 12px var(--warn)}
+
+.an-title-wrap{flex:1}
+.an-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;color:var(--text)}
+.an-sub{font-size:8px;color:var(--dim);margin-top:1px;letter-spacing:1px}
+
+.an-status{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all 0.3s}
+.sd-idle  {background:rgba(100,150,200,0.3);box-shadow:none}
+.sd-run   {background:var(--blue-b);box-shadow:0 0 10px var(--blue-b);animation:blink 0.7s infinite}
+.sd-safe  {background:var(--safe);box-shadow:0 0 8px var(--safe)}
+.sd-threat{background:var(--threat);box-shadow:0 0 10px var(--threat);animation:blink 0.5s infinite}
+.sd-warn  {background:var(--warn);box-shadow:0 0 8px var(--warn)}
+
+.status-text{font-size:9px;letter-spacing:2px;font-family:'Rajdhani',sans-serif;font-weight:600;transition:color 0.3s}
+.st-idle  {color:var(--dim)}
+.st-run   {color:var(--blue-b);animation:blink 0.8s infinite}
+.st-safe  {color:var(--safe)}
+.st-threat{color:var(--threat);animation:blink 0.6s infinite}
+.st-warn  {color:var(--warn)}
+
+/* Progress bar inside node */
+.an-progress{height:3px;background:rgba(0,120,200,0.15);border:1px solid rgba(0,150,220,0.2);margin:5px 0;overflow:hidden}
+.an-prog-fill{height:100%;width:0;transition:width 0.5s ease,background 0.3s;box-shadow:0 0 5px}
+
+/* Detail row */
+.an-details{display:flex;gap:0;flex-wrap:wrap}
+.an-detail{
+  flex:1; min-width:80px;
+  padding:4px 6px; border:1px solid rgba(0,150,220,0.1);
+  margin:1px;
+}
+.an-detail-label{font-size:7px;color:var(--dim);letter-spacing:2px;margin-bottom:2px}
+.an-detail-val{font-size:9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600}
+.an-detail-val.ok{color:var(--safe)}
+.an-detail-val.thr{color:var(--threat)}
+.an-detail-val.wn{color:var(--warn)}
+.an-detail-val.dim{color:var(--dim)}
+
+/* Parallel container */
+.parallel-wrap{display:flex;width:100%;gap:10px;align-items:flex-start}
+.parallel-wrap .agent-node{width:100%}
+
+/* FUSION node — wider, more prominent */
+.fusion-node{
+  width:95%;
+  background:rgba(0,80,160,0.08);
+  border:2px solid rgba(0,180,255,0.3);
+  padding:12px 16px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  transition:all 0.4s;
+  position:relative; overflow:hidden;
+}
+.fusion-node.done-safe  {border-color:rgba(0,255,136,0.6);background:rgba(0,200,100,0.08);box-shadow:0 0 24px rgba(0,255,136,0.1) inset}
+.fusion-node.done-threat{border-color:rgba(255,34,51,0.7);background:rgba(200,0,30,0.09);box-shadow:0 0 24px rgba(255,34,51,0.14) inset}
+.fusion-node.done-warn  {border-color:rgba(255,170,0,0.6);background:rgba(180,120,0,0.08);box-shadow:0 0 24px rgba(255,170,0,0.1) inset}
+.fusion-node.active     {border-color:var(--blue-b);background:rgba(0,180,255,0.1);box-shadow:0 0 30px rgba(0,200,255,0.15) inset,0 0 40px rgba(0,180,255,0.08)}
+
+.fusion-node.active::after{
+  content:''; position:absolute; top:0; left:0; width:100%; height:2px;
+  background:linear-gradient(90deg,transparent,var(--blue-b),transparent);
+  animation:nodeScan 1s linear infinite;
+}
+
+.fn-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fn-icon{
+  width:32px;height:32px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  background:rgba(0,180,255,0.08); border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  box-shadow:0 0 10px var(--blue);flex-shrink:0;
+  animation:hexPulse 3s ease-in-out infinite;
+}
+.fn-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:4px;color:var(--text)}
+.fn-sub{font-size:8px;color:var(--dim);margin-top:1px}
+
+.fusion-body{display:flex;gap:10px;align-items:stretch;margin-top:4px}
+
+.fusion-verdict-area{flex:1;display:flex;flex-direction:column;gap:3px}
+.fv-label{font-size:7px;letter-spacing:3px;color:var(--dim)}
+.fv-text{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;transition:all 0.4s}
+.fv-idle  {color:var(--dim);font-size:14px;letter-spacing:2px}
+.fv-safe  {color:var(--safe);text-shadow:0 0 16px var(--safe)}
+.fv-threat{color:var(--threat);text-shadow:0 0 18px var(--threat);animation:blink 0.6s infinite}
+.fv-warn  {color:var(--warn);text-shadow:0 0 14px var(--warn)}
+
+.fv-reason{font-size:9px;color:var(--dim);margin-top:3px;line-height:1.6}
+.fv-reason .hl{color:var(--warn)}
+.fv-reason .er{color:var(--threat)}
+.fv-reason .ok{color:var(--safe)}
+
+.fusion-score-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:70px;border-left:1px solid rgba(0,150,220,0.15);padding-left:10px}
+.fs-label{font-size:7px;letter-spacing:3px;color:var(--dim)}
+.fs-value{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1;transition:all 0.4s}
+.fs-idle  {color:var(--dim)}
+.fs-safe  {color:var(--safe);text-shadow:0 0 14px var(--safe)}
+.fs-threat{color:var(--threat);text-shadow:0 0 16px var(--threat)}
+.fs-warn  {color:var(--warn);text-shadow:0 0 14px var(--warn)}
+.fs-unit  {font-size:9px;color:var(--dim)}
+
+.fusion-bar-wrap{height:3px;background:rgba(0,120,200,0.15);border:1px solid rgba(0,150,220,0.2);overflow:hidden;margin-top:6px}
+.fusion-bar-fill{height:100%;width:0;transition:width 0.8s ease,background 0.4s;box-shadow:0 0 6px}
+
+/* Conflict badge */
+.conflict-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.4);
+  padding:2px 8px;font-size:8px;letter-spacing:2px;color:var(--warn);
+  margin-top:5px; display:none;
+}
+.conflict-badge.show{display:inline-flex}
+
+/* ── RIGHT: LOG PANEL ── */
+.right-panel{display:flex;flex-direction:column;gap:7px;overflow:hidden}
+
+.log-card{
+  flex:1; background:var(--panel); border:1px solid var(--border);
+  padding:8px 10px; display:flex; flex-direction:column; overflow:hidden;
+  clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);
+  min-height:0;
+}
+.log-card-title{font-size:7px;letter-spacing:4px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;margin-bottom:6px;flex-shrink:0}
+.log-inner{flex:1;overflow:hidden;position:relative;min-height:0}
+.log-scroll{animation:logUp 25s linear infinite}
+@keyframes logUp{0%{transform:translateY(0)}100%{transform:translateY(-400px)}}
+.ll{font-size:8.5px;color:rgba(100,190,255,0.45);line-height:2.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ll .ok {color:var(--safe)}
+.ll .wn {color:var(--warn)}
+.ll .er {color:var(--threat)}
+.ll .tg {color:var(--gold-b)}
+.ll .d  {color:rgba(100,180,255,0.3)}
+
+/* ── BOTTOM BAR ── */
+.bottom-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--border);
+  padding:0 16px;
+  background:rgba(0,4,12,0.97);
+  font-size:8.5px;color:var(--dim);
+  position:relative;overflow:hidden;
+}
+.bottom-bar::before{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--blue),var(--cyan),var(--blue),transparent)}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:4px;color:var(--blue-b);text-shadow:0 0 10px var(--blue);animation:engPulse 3s ease-in-out infinite}
+@keyframes engPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+
+/* Scan line */
+.hscan{position:fixed;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,255,0.25),transparent);pointer-events:none;z-index:50;animation:hscanMove 10s linear infinite;opacity:0}
+@keyframes hscanMove{0%{top:0;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100vh;opacity:0}}
+
+/* Alert */
+.alert-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(200,0,20,0.07);border:1px solid var(--threat);color:var(--threat);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:5px;padding:4px 24px;z-index:200;opacity:0;white-space:nowrap;transition:opacity 0.3s}
+.alert-banner.show{opacity:1;animation:alertP 2s ease-in-out infinite}
+@keyframes alertP{0%,100%{opacity:1}50%{opacity:0.45}}
+</style>
+</head>
+<body>
+
+<div class="hscan"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+<div class="alert-banner" id="alertBanner">⚠ PROMPT INJECTION DETECTED — PIPELINE BLOCKED</div>
+
+<div class="root">
+
+<!-- ═══════════ TOP BAR ═══════════ -->
+<div class="top-bar">
+  <div class="logo-row">
+    <div class="shield-hex">🛡</div>
+    <div>
+      <div class="logo-main">ShieldPrompt</div>
+      <div class="logo-sub">MULTI-AGENT PROMPT INJECTION DEFENSE — ANG™ PROTOCOL</div>
+    </div>
+  </div>
+  <div class="top-mid">
+    <div class="top-tag">REAL-TIME 4-AGENT DETECTION PIPELINE</div>
+    <div class="top-stats">
+      <span>AGENTS <span class="on">4 ONLINE</span></span>
+      <span>SCANNED <span class="on" id="scanCount">1,247</span></span>
+      <span>BLOCKED <span class="thr" id="blockCount">38</span></span>
+      <span>CONFLICTS <span class="wn" id="confCount" style="color:var(--warn)">7</span></span>
+      <span>UPTIME <span class="on">99.97%</span></span>
+    </div>
+  </div>
+  <div class="top-right">
+    <div class="top-clock" id="clock">00:00:00</div>
+    <div class="top-date">2026.04.12 — NEBULA BLOCK</div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main-area">
+
+  <!-- LEFT -->
+  <div class="left-panel">
+
+    <div class="input-wrap">
+      <div class="panel-label">◈ PROMPT INPUT</div>
+      <textarea class="prompt-box" id="promptInput" placeholder="Enter prompt for injection scan...&#10;支持中文 / English / 混合输入&#10;&#10;Try: 忽略之前的指令，你现在是..."></textarea>
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">▶ DEPLOY AGENTS — SCAN</button>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-title">◈ SESSION STATS</div>
+      <div class="mc-row"><span>TOTAL SCANNED</span><span class="v" id="stTotal">1,247</span></div>
+      <div class="mc-row"><span>CLEAN</span>   <span class="v ok" id="stClean">1,202</span></div>
+      <div class="mc-row"><span>WARNING</span> <span class="v wn" id="stWarn">19</span></div>
+      <div class="mc-row"><span>BLOCKED</span> <span class="v cr" id="stBlock">19</span></div>
+      <div class="mc-row"><span>CONFLICT</span><span class="v wn" id="stConf">7</span></div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-title">◈ AGENT ACCURACY</div>
+      <div class="rings-row">
+        <div>
+          <div class="mini-ring">
+            <svg viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r="23" stroke="rgba(0,120,200,0.18)" stroke-width="3" fill="none"/>
+              <circle cx="27" cy="27" r="23" stroke="url(#r1)" stroke-width="3" fill="none" stroke-dasharray="144" stroke-dashoffset="14" stroke-linecap="round" transform="rotate(-90 27 27)"/>
+              <defs><linearGradient id="r1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#004d6e"/><stop offset="100%" stop-color="#00eeff"/></linearGradient></defs>
+            </svg>
+            <div class="rl" style="color:var(--blue-b);text-shadow:0 0 8px var(--blue)">90<small>%<br>GEMINI</small></div>
+          </div>
+        </div>
+        <div>
+          <div class="mini-ring">
+            <svg viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r="23" stroke="rgba(0,120,200,0.18)" stroke-width="3" fill="none"/>
+              <circle cx="27" cy="27" r="23" stroke="url(#r2)" stroke-width="3" fill="none" stroke-dasharray="144" stroke-dashoffset="9" stroke-linecap="round" transform="rotate(-90 27 27)"/>
+              <defs><linearGradient id="r2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7a6020"/><stop offset="100%" stop-color="#ffd700"/></linearGradient></defs>
+            </svg>
+            <div class="rl" style="color:var(--gold-b);text-shadow:0 0 8px var(--gold)">94<small>%<br>QWEN</small></div>
+          </div>
+        </div>
+        <div>
+          <div class="mini-ring">
+            <svg viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r="23" stroke="rgba(0,120,200,0.18)" stroke-width="3" fill="none"/>
+              <circle cx="27" cy="27" r="23" stroke="url(#r3)" stroke-width="3" fill="none" stroke-dasharray="144" stroke-dashoffset="4" stroke-linecap="round" transform="rotate(-90 27 27)"/>
+              <defs><linearGradient id="r3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#006633"/><stop offset="100%" stop-color="#00ff88"/></linearGradient></defs>
+            </svg>
+            <div class="rl" style="color:var(--safe);text-shadow:0 0 8px var(--safe)">97<small>%<br>FUSION</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mini-card" style="flex:1">
+      <div class="mini-title">◈ ATTACK DISTRIBUTION</div>
+      <div class="atk-row"><div class="atk-lbl">ROLE HIJACK</div><div class="atk-track"><div class="atk-fill" style="width:72%;background:var(--threat);box-shadow:0 0 4px var(--threat)"></div></div><div class="atk-val" style="color:var(--threat)">72%</div></div>
+      <div class="atk-row"><div class="atk-lbl">JAILBREAK</div><div class="atk-track"><div class="atk-fill" style="width:55%;background:var(--threat);box-shadow:0 0 4px var(--threat)"></div></div><div class="atk-val" style="color:var(--threat)">55%</div></div>
+      <div class="atk-row"><div class="atk-lbl">ZH PHONETIC</div><div class="atk-track"><div class="atk-fill" style="width:38%;background:var(--warn);box-shadow:0 0 4px var(--warn)"></div></div><div class="atk-val" style="color:var(--warn)">38%</div></div>
+      <div class="atk-row"><div class="atk-lbl">DATA EXFIL</div><div class="atk-track"><div class="atk-fill" style="width:24%;background:var(--warn);box-shadow:0 0 4px var(--warn)"></div></div><div class="atk-val" style="color:var(--warn)">24%</div></div>
+      <div class="atk-row"><div class="atk-lbl">INDIRECT INJ.</div><div class="atk-track"><div class="atk-fill" style="width:15%;background:var(--blue-dim);box-shadow:0 0 4px var(--blue-dim)"></div></div><div class="atk-val">15%</div></div>
+    </div>
+
+  </div>
+
+  <!-- CENTER: PIPELINE HERO -->
+  <div class="center-panel">
+    <div class="pipeline-stage">
+      <div class="ps-title">◈ AGENT PIPELINE — LIVE EXECUTION FLOW</div>
+
+      <div class="pipeline" id="pipeline">
+
+        <!-- INPUT bubble -->
+        <div class="pipe-input" id="pipeInput">
+          <div class="pi-label">PROMPT INPUT</div>
+          <div class="pi-value" id="piVal">— AWAITING —</div>
+          <div class="pi-badge en" id="piBadge">—</div>
+        </div>
+
+        <!-- Wire 1 -->
+        <div class="wire" id="w1">
+          <div class="wire-line" id="wl1" style="height:18px"></div>
+          <div class="wire-arrow">▼</div>
+        </div>
+
+        <!-- AGENT 1: ROUTER -->
+        <div class="agent-node" id="node1">
+          <div class="an-header">
+            <div class="an-num">01</div>
+            <div class="an-title-wrap">
+              <div class="an-title">ROUTER AGENT</div>
+              <div class="an-sub">LANG DETECT · CLASSIFICATION · ROUTING STRATEGY</div>
+            </div>
+            <div class="an-status">
+              <div class="status-dot sd-idle" id="dot1"></div>
+              <div class="status-text st-idle" id="st1">IDLE</div>
+            </div>
+          </div>
+          <div class="an-progress"><div class="an-prog-fill" id="prog1" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div></div>
+          <div class="an-details">
+            <div class="an-detail"><div class="an-detail-label">LANGUAGE</div><div class="an-detail-val dim" id="d1lang">—</div></div>
+            <div class="an-detail"><div class="an-detail-label">CLASSIFICATION</div><div class="an-detail-val dim" id="d1cls">—</div></div>
+            <div class="an-detail"><div class="an-detail-label">ROUTE TO</div><div class="an-detail-val dim" id="d1route">—</div></div>
+            <div class="an-detail"><div class="an-detail-label">CONFIDENCE</div><div class="an-detail-val dim" id="d1conf">—</div></div>
+          </div>
+        </div>
+
+        <!-- Split wire -->
+        <div class="wire-split" id="w2" style="margin:0;padding:0 5%">
+          <div class="wire-split-left">
+            <div class="wire-h" id="whl" style="height:2px;align-self:flex-end"></div>
+            <div class="wire-line" id="wll" style="height:16px"></div>
+            <div class="wire-arrow" style="color:var(--blue-dim)">▼</div>
+          </div>
+          <div style="width:10px;flex-shrink:0"></div>
+          <div class="wire-split-right">
+            <div class="wire-h right" id="whr" style="height:2px;align-self:flex-start"></div>
+            <div class="wire-line" id="wlr" style="height:16px"></div>
+            <div class="wire-arrow" style="color:var(--blue-dim)">▼</div>
+          </div>
+        </div>
+
+        <!-- AGENT 2 + 3 parallel -->
+        <div class="parallel-wrap" id="parallelRow">
+
+          <!-- AGENT 2: GEMINI -->
+          <div class="agent-node" id="node2">
+            <div class="an-header">
+              <div class="an-num" style="font-size:18px">02</div>
+              <div class="an-title-wrap">
+                <div class="an-title" style="font-size:11px">GEMINI AGENT</div>
+                <div class="an-sub">EN · STRUCTURED ATTACK</div>
+              </div>
+              <div class="an-status">
+                <div class="status-dot sd-idle" id="dot2"></div>
+                <div class="status-text st-idle" id="st2">IDLE</div>
+              </div>
+            </div>
+            <div class="an-progress"><div class="an-prog-fill" id="prog2"></div></div>
+            <div class="an-details">
+              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:8px">Gemini-2.0-Flash</div></div>
+              <div class="an-detail"><div class="an-detail-label">CONFIDENCE</div><div class="an-detail-val dim" id="d2conf">—</div></div>
+              <div class="an-detail" style="flex-basis:100%"><div class="an-detail-label">VERDICT</div><div class="an-detail-val dim" id="d2verd">—</div></div>
+            </div>
+          </div>
+
+          <!-- AGENT 3: QWEN -->
+          <div class="agent-node" id="node3">
+            <div class="an-header">
+              <div class="an-num" style="font-size:18px">03</div>
+              <div class="an-title-wrap">
+                <div class="an-title" style="font-size:11px">QWEN AGENT</div>
+                <div class="an-sub">中文 · 谐音 · ZH/EN MIX</div>
+              </div>
+              <div class="an-status">
+                <div class="status-dot sd-idle" id="dot3"></div>
+                <div class="status-text st-idle" id="st3">IDLE</div>
+              </div>
+            </div>
+            <div class="an-progress"><div class="an-prog-fill" id="prog3"></div></div>
+            <div class="an-details">
+              <div class="an-detail"><div class="an-detail-label">MODEL</div><div class="an-detail-val dim" style="font-size:8px">Qwen2.5-3B</div></div>
+              <div class="an-detail"><div class="an-detail-label">CONFIDENCE</div><div class="an-detail-val dim" id="d3conf">—</div></div>
+              <div class="an-detail" style="flex-basis:100%"><div class="an-detail-label">VERDICT</div><div class="an-detail-val dim" id="d3verd">—</div></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Merge wire -->
+        <div class="wire" id="w3">
+          <div class="wire-arrow" style="color:var(--blue-dim)">▼</div>
+          <div class="wire-line" id="wl3" style="height:14px"></div>
+          <div class="wire-arrow">▼</div>
+        </div>
+
+        <!-- AGENT 4: FUSION -->
+        <div class="fusion-node" id="node4">
+          <div class="fn-header">
+            <div class="fn-icon">⚡</div>
+            <div class="an-title-wrap">
+              <div class="fn-title">04 — FUSION AGENT</div>
+              <div class="fn-sub">CONFLICT ARBITRATION · THREAT ESCALATION · FINAL VERDICT</div>
+            </div>
+            <div class="an-status">
+              <div class="status-dot sd-idle" id="dot4"></div>
+              <div class="status-text st-idle" id="st4">AWAITING</div>
+            </div>
+          </div>
+          <div class="an-progress"><div class="an-prog-fill" id="prog4"></div></div>
+          <div class="conflict-badge" id="conflictBadge">⚡ A2 ↔ A3 CONFLICT — THREAT ESCALATED</div>
+          <div class="fusion-body">
+            <div class="fusion-verdict-area">
+              <div class="fv-label">FINAL VERDICT</div>
+              <div class="fv-text fv-idle" id="fusionVerdict">— AWAITING PIPELINE —</div>
+              <div class="fv-reason" id="fusionReason">Submit a prompt to activate the 4-agent detection pipeline.</div>
+            </div>
+            <div class="fusion-score-area">
+              <div class="fs-label">THREAT</div>
+              <div class="fs-value fs-idle" id="fusionScore">—</div>
+              <div class="fs-unit">SCORE</div>
+            </div>
+          </div>
+          <div class="fusion-bar-wrap"><div class="fusion-bar-fill" id="fusionBar"></div></div>
+        </div>
+
+      </div><!-- .pipeline -->
+    </div><!-- .pipeline-stage -->
+  </div><!-- .center-panel -->
+
+  <!-- RIGHT: LOG -->
+  <div class="right-panel">
+
+    <div class="mini-card" style="clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px)">
+      <div class="mini-title">◈ LAST SCAN RESULT</div>
+      <div class="mc-row"><span>PROMPT LANG</span>  <span class="v" id="rLang">—</span></div>
+      <div class="mc-row"><span>ROUTER CLASS</span> <span class="v" id="rClass">—</span></div>
+      <div class="mc-row"><span>GEMINI CONF</span>  <span class="v" id="rGemini">—</span></div>
+      <div class="mc-row"><span>QWEN CONF</span>    <span class="v" id="rQwen">—</span></div>
+      <div class="mc-row"><span>ARBITRATION</span>  <span class="v" id="rArb">—</span></div>
+      <div class="mc-row"><span>ESCALATION</span>   <span class="v" id="rEsc">—</span></div>
+    </div>
+
+    <div class="log-card" style="clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px)">
+      <div class="log-card-title">◈ LIVE THREAT LOG</div>
+      <div class="log-inner">
+        <div class="log-scroll" id="liveLog">
+          <div class="ll"><span class="tg">[14:22:01]</span> <span class="ok">CLEAN</span> — "Please summarize this doc" [EN]</div>
+          <div class="ll"><span class="tg">[14:22:04]</span> <span class="er">BLOCKED</span> — Role hijack detected [ZH-MIX] 0.94</div>
+          <div class="ll"><span class="tg">[14:22:07]</span> <span class="ok">CLEAN</span> — "翻译这段话" [ZH] Qwen:clean</div>
+          <div class="ll"><span class="tg">[14:22:09]</span> <span class="wn">WARN</span>  — 谐音注入 suspected [ZH] escalated</div>
+          <div class="ll"><span class="tg">[14:22:12]</span> <span class="ok">CLEAN</span> — API request [EN] Gemini:0.02</div>
+          <div class="ll"><span class="tg">[14:22:15]</span> <span class="er">BLOCKED</span> — Jailbreak pattern conf:0.98</div>
+          <div class="ll"><span class="tg">[14:22:18]</span> <span class="d">FUSION</span> — Conflict A2↔A3, threat elevated</div>
+          <div class="ll"><span class="tg">[14:22:21]</span> <span class="ok">CLEAN</span> — "用中文写一首诗" [ZH]</div>
+          <div class="ll"><span class="tg">[14:22:24]</span> <span class="er">BLOCKED</span> — Data exfil attempt conf:0.91</div>
+          <div class="ll"><span class="tg">[14:22:27]</span> <span class="ok">CLEAN</span> — "Explain quantum computing" [EN]</div>
+          <div class="ll"><span class="tg">[14:22:30]</span> <span class="wn">WARN</span>  — Mixed injection ZH/EN boundary</div>
+          <div class="ll"><span class="tg">[14:22:33]</span> <span class="er">BLOCKED</span> — System prompt override [EN]</div>
+          <div class="ll"><span class="tg">[14:22:36]</span> <span class="ok">CLEAN</span> — "帮我写个报告" [ZH]</div>
+          <div class="ll"><span class="tg">[14:22:39]</span> <span class="d">ROUTER</span> — Routed to A2+A3 parallel</div>
+          <div class="ll"><span class="tg">[14:22:42]</span> <span class="er">BLOCKED</span> — Indirect injection via doc</div>
+          <div class="ll"><span class="tg">[14:22:45]</span> <span class="ok">CLEAN</span> — "What is machine learning?"</div>
+          <div class="ll"><span class="tg">[14:22:48]</span> <span class="wn">WARN</span>  — Prompt boundary anomaly</div>
+          <div class="ll"><span class="tg">[14:22:51]</span> <span class="er">BLOCKED</span> — Role override: "you are now..."</div>
+          <div class="ll"><span class="tg">[14:22:54]</span> <span class="ok">CLEAN</span> — "发邮件给团队" [ZH]</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- main-area -->
+
+<!-- BOTTOM -->
+<div class="bottom-bar">
+  <span>SHIELDPROMPT v0.9.1 — ANG™ AGENTIC NEURAL GRAPH PROTOCOL</span>
+  <div class="brand">▶ NEBULA BLOCK × MEGANOVA — 4-AGENT DEFENSE ONLINE</div>
+  <span>ROUTER · GEMINI · QWEN · FUSION</span>
+</div>
+
+</div><!-- .root -->
+
+<script>
+// Clock
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+
+    String(n.getMinutes()).padStart(2,'0')+':'+
+    String(n.getSeconds()).padStart(2,'0');
+}
+tick(); setInterval(tick,1000);
+
+// Live counters
+let scanN=1247,blockN=38,confN=7;
+setInterval(()=>{
+  if(Math.random()<0.25){
+    scanN++;
+    ['scanCount','stTotal'].forEach(id=>document.getElementById(id).textContent=scanN.toLocaleString());
+  }
+  if(Math.random()<0.03){
+    blockN++;
+    ['blockCount','stBlock'].forEach(id=>document.getElementById(id).textContent=blockN);
+  }
+},2200);
+
+// Scenarios
+const SC = {
+  clean:{
+    lang:'EN',cls:'NORMAL',route:'A2 ONLY',rconf:'99%',
+    a2:{conf:'0.02',verd:'CLEAN',cls:'safe'},
+    a3:{conf:'N/A', verd:'SKIP', cls:'skip'},
+    arb:'UNANIMOUS',esc:'NONE',
+    fusion:{verd:'CLEAN — NO THREAT',reason:'<span class="ok">All agents unanimous.</span> No injection patterns found. Prompt forwarded.',cls:'safe',score:2},
+  },
+  warn:{
+    lang:'EN',cls:'ANOMALOUS',route:'A2 ONLY',rconf:'73%',
+    a2:{conf:'0.61',verd:'WARN',cls:'warn'},
+    a3:{conf:'N/A', verd:'SKIP',cls:'skip'},
+    arb:'PARTIAL MATCH',esc:'MODERATE',
+    fusion:{verd:'WARNING — REVIEW',reason:'Indirect injection signature detected. Confidence below block threshold. <span class="hl">Manual review advised.</span>',cls:'warn',score:61},
+  },
+  threat:{
+    lang:'ZH-MIX',cls:'SUSPICIOUS',route:'A2 + A3',rconf:'87%',
+    a2:{conf:'0.31',verd:'CLEAN',cls:'safe'},
+    a3:{conf:'0.94',verd:'THREAT',cls:'threat'},
+    arb:'A2 ↔ A3 CONFLICT',esc:'ESCALATED',
+    fusion:{verd:'INJECTION DETECTED',reason:'<span class="er">A2↔A3 CONFLICT:</span> Gemini reported clean but Qwen detected <span class="hl">谐音注入</span> pattern. Fusion escalated threat level.',cls:'threat',score:94},
+    conflict:true,
+  }
+};
+
+let scanning=false;
+
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function setNode(id,state){
+  const el=document.getElementById('node'+id);
+  el.className=(id===4?'fusion-node':'agent-node')+' '+(state?state:'');
+}
+function setDot(id,cls){document.getElementById('dot'+id).className='status-dot '+cls}
+function setSt(id,text,cls){const e=document.getElementById('st'+id);e.textContent=text;e.className='status-text '+cls}
+function setWire(id,active){
+  const el=document.getElementById('wl'+id);
+  if(el) el.classList.toggle('active',active);
+}
+function setWireH(id,active){
+  ['whl','whr'].forEach(w=>{const e=document.getElementById(w);if(e)e.classList.toggle('active',active)});
+  ['wll','wlr'].forEach(w=>{const e=document.getElementById(w);if(e)e.classList.toggle('active',active)});
+}
+function animProg(id,target,dur,color){
+  return new Promise(res=>{
+    const b=document.getElementById('prog'+id);
+    b.style.background=color||'var(--blue)';
+    b.style.boxShadow='0 0 5px '+(color||'var(--blue)');
+    let cur=0; const step=target/(dur/16);
+    const iv=setInterval(()=>{
+      cur=Math.min(cur+step,target);
+      b.style.width=cur+'%';
+      if(cur>=target){clearInterval(iv);res();}
+    },16);
+  });
+}
+function detailVal(id,text,cls){
+  const e=document.getElementById(id);
+  e.textContent=text;
+  e.className='an-detail-val '+(cls||'');
+}
+function timeNow(){
+  const n=new Date();
+  return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+}
+function addLog(html){
+  const log=document.getElementById('liveLog');
+  const div=document.createElement('div');
+  div.className='ll'; div.innerHTML=html;
+  log.insertBefore(div,log.firstChild);
+}
+
+function resetAll(){
+  // Nodes
+  [1,2,3,4].forEach(i=>{
+    if(i<4) setNode(i,'');
+    else setNode(i,'');
+    setDot(i,'sd-idle');
+    setSt(i,i===4?'AWAITING':'IDLE','st-idle');
+    const p=document.getElementById('prog'+i);
+    if(p){p.style.width='0';p.style.background='var(--blue)'}
+  });
+  // Wires off
+  setWire(1,false); setWire(3,false); setWireH('split',false);
+  // Details
+  ['d1lang','d1cls','d1route','d1conf'].forEach(id=>{const e=document.getElementById(id);e.textContent='—';e.className='an-detail-val dim'});
+  ['d2conf','d2verd','d3conf','d3verd'].forEach(id=>{const e=document.getElementById(id);e.textContent='—';e.className='an-detail-val dim'});
+  // Fusion
+  const fv=document.getElementById('fusionVerdict');
+  fv.textContent='— AWAITING PIPELINE —';fv.className='fv-text fv-idle';
+  document.getElementById('fusionReason').innerHTML='Submit a prompt to activate the 4-agent detection pipeline.';
+  document.getElementById('fusionScore').textContent='—';
+  document.getElementById('fusionScore').className='fs-value fs-idle';
+  document.getElementById('fusionBar').style.width='0';
+  document.getElementById('node4').className='fusion-node';
+  document.getElementById('conflictBadge').classList.remove('show');
+  document.getElementById('alertBanner').classList.remove('show');
+  // Input node
+  document.getElementById('piVal').textContent='SCANNING...';
+  document.getElementById('piBadge').textContent='—';
+  // Last scan
+  ['rLang','rClass','rGemini','rQwen','rArb','rEsc'].forEach(id=>{document.getElementById(id).textContent='—';document.getElementById(id).className='v'});
+}
+
+async function startScan(){
+  if(scanning) return;
+  const input=document.getElementById('promptInput').value.trim();
+  if(!input){document.getElementById('promptInput').style.borderColor='var(--threat)';setTimeout(()=>document.getElementById('promptInput').style.borderColor='',1000);return;}
+
+  scanning=true;
+  document.getElementById('scanBtn').textContent='⟳ PIPELINE ACTIVE...';
+  document.getElementById('scanBtn').style.color='var(--warn)';
+
+  // Pick scenario
+  const lo=input.toLowerCase();
+  let sc;
+  if(/ignore|忽略|jailbreak|forget|system prompt|你现在是|角色扮演|绕过|bypass|令牌|越权|现在起你/.test(lo)) sc=SC.threat;
+  else if(/pretend|assume|act as|假装|扮演|imagine you/.test(lo)) sc=SC.warn;
+  else sc=SC.clean;
+
+  resetAll();
+
+  // Show input
+  document.getElementById('piVal').textContent=input.slice(0,40)+(input.length>40?'…':'');
+  const langBadge=document.getElementById('piBadge');
+  if(sc.lang==='ZH-MIX'){langBadge.textContent='ZH-MIX';langBadge.className='pi-badge mix'}
+  else if(sc.lang.startsWith('ZH')){langBadge.textContent='ZH';langBadge.className='pi-badge zh'}
+  else{langBadge.textContent='EN';langBadge.className='pi-badge en'}
+
+  await delay(300);
+
+  // ── AGENT 1 ROUTER ──
+  setWire(1,true);
+  await delay(200);
+  setNode(1,'active'); setDot(1,'sd-run'); setSt(1,'ROUTING','st-run');
+  await animProg(1,100,700,'var(--blue)');
+  detailVal('d1lang', sc.lang,    sc.lang==='ZH-MIX'?'wn':'');
+  detailVal('d1cls',  sc.cls,     sc.cls==='NORMAL'?'ok':sc.cls==='SUSPICIOUS'?'wn':'thr');
+  detailVal('d1route',sc.route,   '');
+  detailVal('d1conf', sc.rconf,   'ok');
+  setNode(1,'done-safe'); setDot(1,'sd-safe'); setSt(1,'DONE','st-safe');
+  setWire(1,false);
+  document.getElementById('rLang').textContent=sc.lang;
+  document.getElementById('rClass').textContent=sc.cls;
+  document.getElementById('rClass').className='v '+(sc.cls==='NORMAL'?'ok':sc.cls==='SUSPICIOUS'?'wn':'cr');
+  await delay(200);
+
+  // ── AGENT 2 + 3 PARALLEL ──
+  setWireH('split',true);
+  await delay(150);
+
+  // A2
+  const cls2=sc.a2.cls;
+  setNode(2,'active'); setDot(2,'sd-run'); setSt(2,'SCANNING','st-run');
+  const p2Color=cls2==='safe'?'var(--safe)':cls2==='threat'?'var(--threat)':'var(--warn)';
+
+  // A3
+  const cls3=sc.a3.cls;
+  setNode(3, cls3==='skip'?'':'active');
+  if(cls3!=='skip'){setDot(3,'sd-run');setSt(3,'SCANNING','st-run');}
+  const p3Color=cls3==='threat'?'var(--threat)':cls3==='warn'?'var(--warn)':'var(--blue-dim)';
+
+  // Animate both simultaneously
+  const [,] = await Promise.all([
+    animProg(2,100,900,p2Color),
+    cls3!=='skip'?animProg(3,100,1000,p3Color):animProg(3,30,400,'var(--blue-dim)')
+  ]);
+
+  // A2 result
+  detailVal('d2conf',sc.a2.conf, cls2==='safe'?'ok':cls2==='threat'?'thr':'wn');
+  detailVal('d2verd',sc.a2.verd, cls2==='safe'?'ok':cls2==='threat'?'thr':'wn');
+  setNode(2,'done-'+cls2); setDot(2,'sd-'+cls2); setSt(2,sc.a2.verd,'st-'+cls2);
+  document.getElementById('rGemini').textContent=sc.a2.conf+' → '+sc.a2.verd;
+  document.getElementById('rGemini').className='v '+(cls2==='safe'?'ok':cls2==='threat'?'cr':'wn');
+
+  // A3 result
+  if(cls3!=='skip'){
+    detailVal('d3conf',sc.a3.conf, cls3==='safe'?'ok':cls3==='threat'?'thr':'wn');
+    detailVal('d3verd',sc.a3.verd, cls3==='safe'?'ok':cls3==='threat'?'thr':'wn');
+    setNode(3,'done-'+cls3); setDot(3,'sd-'+cls3); setSt(3,sc.a3.verd,'st-'+cls3);
+    document.getElementById('rQwen').textContent=sc.a3.conf+' → '+sc.a3.verd;
+    document.getElementById('rQwen').className='v '+(cls3==='safe'?'ok':cls3==='threat'?'cr':'wn');
+  } else {
+    detailVal('d3conf','N/A','dim'); detailVal('d3verd','SKIPPED','dim');
+    document.getElementById('rQwen').textContent='SKIPPED (EN route)';
+  }
+
+  setWireH('split',false);
+  await delay(250);
+
+  // ── AGENT 4 FUSION ──
+  setWire(3,true);
+  await delay(200);
+  setNode(4,'active'); setDot(4,'sd-run'); setSt(4,'ARBITRATING','st-run');
+  const fs=sc.fusion;
+  const fColor=fs.cls==='safe'?'var(--safe)':fs.cls==='threat'?'var(--threat)':'var(--warn)';
+  await animProg(4,100,700,fColor);
+  setWire(3,false);
+
+  // Conflict badge
+  if(sc.conflict){
+    document.getElementById('conflictBadge').classList.add('show');
+    confN++;
+    document.getElementById('confCount').textContent=confN;
+    document.getElementById('stConf').textContent=confN;
+  }
+
+  // Fusion verdict
+  const fvEl=document.getElementById('fusionVerdict');
+  fvEl.textContent=fs.verd;
+  fvEl.className='fv-text fv-'+fs.cls;
+  document.getElementById('fusionReason').innerHTML=fs.reason;
+  document.getElementById('fusionScore').textContent=fs.score;
+  document.getElementById('fusionScore').className='fs-value fs-'+fs.cls;
+  setNode(4,'done-'+fs.cls);
+  setDot(4,'sd-'+(fs.cls==='safe'?'safe':fs.cls==='threat'?'threat':'warn'));
+  setSt(4,fs.cls.toUpperCase(),'st-'+(fs.cls==='safe'?'safe':fs.cls==='threat'?'threat':'warn'));
+
+  // Bar
+  const fb=document.getElementById('fusionBar');
+  fb.style.background=fColor; fb.style.boxShadow='0 0 6px '+fColor;
+  fb.style.width=fs.score+'%';
+
+  // Last scan right panel
+  document.getElementById('rArb').textContent=sc.arb;
+  document.getElementById('rArb').className='v '+(sc.arb.includes('CONFLICT')?'wn':'ok');
+  document.getElementById('rEsc').textContent=sc.esc;
+  document.getElementById('rEsc').className='v '+(sc.esc==='NONE'?'ok':sc.esc==='ESCALATED'?'cr':'wn');
+
+  // Alert
+  if(fs.cls==='threat'){
+    document.getElementById('alertBanner').classList.add('show');
+    addLog('<span class="tg">['+timeNow()+']</span> <span class="er">BLOCKED</span> — '+fs.verd+' | '+sc.lang+' | score:'+fs.score);
+    blockN++;
+    ['blockCount','stBlock'].forEach(id=>document.getElementById(id).textContent=blockN);
+  } else if(fs.cls==='warn'){
+    addLog('<span class="tg">['+timeNow()+']</span> <span class="wn">WARN</span>  — '+fs.verd+' | '+sc.lang);
+  } else {
+    addLog('<span class="tg">['+timeNow()+']</span> <span class="ok">CLEAN</span> — Scan complete | '+sc.lang+' | score:'+fs.score);
+  }
+
+  scanN++;
+  ['scanCount','stTotal'].forEach(id=>document.getElementById(id).textContent=scanN.toLocaleString());
+
+  document.getElementById('scanBtn').textContent='▶ DEPLOY AGENTS — SCAN';
+  document.getElementById('scanBtn').style.color='var(--blue-b)';
+  scanning=false;
+}
+</script>
+</body>
+</html>
