@@ -241,7 +241,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path in ("/", "/index.html", "/shieldprompt.html"):
+        if self.path == "/healthz":
+            body = json.dumps({
+                "status": "ok",
+                "forcefield": _ff_guard is not None,
+                "llm_configured": bool(API_KEY),
+            }).encode()
+            self._send(200, body, "application/json")
+        elif self.path in ("/", "/index.html", "/shieldprompt.html"):
             body = (ROOT / "shieldprompt.html").read_bytes()
             self._send(200, body, "text/html; charset=utf-8")
         else:
