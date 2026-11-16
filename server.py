@@ -14,6 +14,7 @@ API_KEY = os.environ.get("MEGANOVA_API_KEY", "").strip()
 MODEL_GEMINI = "gemini/gemini-3-flash-preview"
 MODEL_QWEN = "Qwen/Qwen3.5-Plus"
 ROOT = Path(__file__).parent
+MAX_PROMPT_CHARS = int(os.environ.get("MAX_PROMPT_CHARS", "8000"))
 
 # Stage 0 — ForceField local ML prefilter (Apache-2.0, offline).
 try:
@@ -252,10 +253,25 @@ class Handler(BaseHTTPRequestHandler):
             return
         n = int(self.headers.get("Content-Length", "0"))
         try:
-            payload = json.loads(self.rfile.read(n) or b"{}")
+            raw = self.rfile.read(n)
+        except Exception:
+            raw = b""
+        try:
+            payload = json.loads(raw or b"{}")
+        except Exception:
+            self._send(400, b'{"error":"invalid json"}', "application/json")
+            return
+        if not isinstance(payload, dict):
+            self._send(400, b'{"error":"invalid json"}', "application/json")
+            return
+        try:
             prompt = (payload.get("prompt") or "").strip()
             if not prompt:
                 self._send(400, b'{"error":"empty prompt"}', "application/json")
+                return
+            if len(prompt) > MAX_PROMPT_CHARS:
+                body = json.dumps({"error": "prompt too long", "max": MAX_PROMPT_CHARS}).encode()
+                self._send(413, body, "application/json")
                 return
             out = run_pipeline(prompt)
             self._send(200, json.dumps(out, ensure_ascii=False).encode(), "application/json; charset=utf-8")
